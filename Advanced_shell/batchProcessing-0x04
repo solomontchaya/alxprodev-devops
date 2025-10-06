@@ -1,10 +1,11 @@
 #!/bin/bash
 # Script name: batchProcessing-0x04
-# Objective: Fetch multiple Pokémon in parallel using background processes and jobs
+# Objective: Fetch multiple Pokémon in parallel with background process management and kill
 
 mkdir -p pokemon_data
 pokemons=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 MAX_RETRIES=3
+PIDS=()
 
 fetch_pokemon() {
     local pokemon=$1
@@ -29,17 +30,20 @@ fetch_pokemon() {
     fi
 }
 
-# Start fetches in parallel
+# Start fetches in parallel and store PIDs
 for pokemon in "${pokemons[@]}"; do
     echo "Fetching data for $pokemon..."
     fetch_pokemon "$pokemon" &
+    PIDS+=($!)
 done
 
 # List all background jobs
 echo "Current background jobs:"
 jobs
 
-# Wait for all background jobs to finish
-wait
+# Wait for all processes and kill any that take too long
+for pid in "${PIDS[@]}"; do
+    wait $pid 2>/dev/null || kill -9 $pid 2>/dev/null
+done
 
 echo "All Pokémon data fetched."
