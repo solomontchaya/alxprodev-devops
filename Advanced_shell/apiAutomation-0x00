@@ -1,0 +1,10 @@
+#!/bin/bash
+# Script name: apiAutomation-0x00
+
+# Define URL and output files
+URL="https://pokeapi.co/api/v2/pokemon/pikachu"
+OUTPUT="data.json"
+ERROR="errors.txt"
+
+# Make API request and handle success/failure
+curl -s -o "$OUTPUT" -w "%{http_code}" "$URL" | grep -q "200" || echo "Error: Failed to fetch data from $URL" >> "$ERROR"
