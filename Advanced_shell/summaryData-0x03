@@ -1,0 +1,37 @@
+#!/bin/bash
+# Script name: summaryData-0x03
+# Objective: Generate a CSV summary (name, height, weight) from multiple Pokémon JSON files
+# and calculate the average height and weight using awk.
+
+DATA_DIR="pokemon_data"
+REPORT_FILE="pokemon_report.csv"
+
+# Check if data directory exists
+if [ ! -d "$DATA_DIR" ]; then
+  echo "Error: Directory '$DATA_DIR' not found. Please run batchProcessing-0x02 first."
+  exit 1
+fi
+
+# Create or overwrite the CSV file with a header
+echo "Name,Height (m),Weight (kg)" > "$REPORT_FILE"
+
+# Extract Pokémon data from each JSON file
+for file in "$DATA_DIR"/*.json; do
+  if [ -f "$file" ]; then
+    name=$(jq -r '.name' "$file" | sed 's/.*/\u&/')
+    height=$(jq '.height' "$file" | awk '{printf "%.1f", $1/10}')
+    weight=$(jq '.weight' "$file" | awk '{printf "%.1f", $1/10}')
+    echo "$name,$height,$weight" >> "$REPORT_FILE"
+  fi
+done
+
+# Display confirmation
+echo "CSV Report generated at: $REPORT_FILE"
+echo
+
+# Print the CSV contents
+cat "$REPORT_FILE"
+echo
+
+# Compute averages using awk
+awk -F, 'NR>1 {h+=$2; w+=$3; n++} END {printf "\nAverage Height: %.2f m\nAverage Weight: %.2f kg\n", h/n, w/n}' "$REPORT_FILE"
