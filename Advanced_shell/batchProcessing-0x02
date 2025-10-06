@@ -1,27 +1,41 @@
 #!/bin/bash
 # Script name: batchProcessing-0x02
-# Objective: Fetch data for multiple Pokémon and save each to a separate file
+# Objective: Fetch multiple Pokémon with retry logic and error handling
 
-# Create output directory if it doesn’t exist
+# Create output directory if it doesn't exist
 mkdir -p pokemon_data
 
 # List of Pokémon to fetch
 pokemons=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 
+MAX_RETRIES=3
+
 # Loop through each Pokémon
 for pokemon in "${pokemons[@]}"; do
     echo "Fetching data for $pokemon..."
+    attempt=1
+    success=0
 
-    # Fetch data from the API
-    response=$(curl -s -w "%{http_code}" -o "pokemon_data/${pokemon}.json" "https://pokeapi.co/api/v2/pokemon/$pokemon")
+    while [ $attempt -le $MAX_RETRIES ]; do
+        # Make API request
+        status=$(curl -s -o "pokemon_data/${pokemon}.json" -w "%{http_code}" "https://pokeapi.co/api/v2/pokemon/$pokemon")
 
-    # Check if the request was successful
-    if [ "$response" -eq 200 ]; then
-        echo "Saved data to pokemon_data/${pokemon}.json ✅"
-    else
-        echo "Error: Failed to fetch data for $pokemon (status: $response)" >> errors.txt
+        if [ "$status" -eq 200 ]; then
+            echo "Saved data to pokemon_data/${pokemon}.json ✅"
+            success=1
+            break
+        else
+            echo "Attempt $attempt failed for $pokemon (status: $status)"
+            attempt=$((attempt + 1))
+            sleep 2
+        fi
+    done
+
+    # Log error if all retries failed
+    if [ $success -eq 0 ]; then
+        echo "Error: Failed to fetch data for $pokemon after $MAX_RETRIES attempts" >> errors.txt
     fi
 
-    # Wait to avoid hitting the rate limit
-    sleep 2
+    # Small delay to avoid rate limiting
+    sleep 1
 done
