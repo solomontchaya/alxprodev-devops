@@ -8,11 +8,11 @@ if [ ! -f data.json ]; then
   exit 1
 fi
 
-# Extract details from JSON using jq
+# Extract data from JSON
 name=$(jq -r '.name' data.json | sed 's/.*/\u&/')
-height=$(jq '.height' data.json | awk '{printf "%.1f", $1/10}')
-weight=$(jq '.weight' data.json | awk '{printf "%.0f", $1/10}')
 type=$(jq -r '.types[0].type.name' data.json | sed 's/.*/\u&/')
+formatted_height=$(jq '.height' data.json | awk '{printf "%.1f", $1/10}')
+formatted_weight=$(jq '.weight' data.json | awk '{printf "%.0f", $1/10}')
 
-# Display formatted message
-echo "$name is of type $type, weighs ${weight}kg, and is ${height}m tall."
+# Print formatted output
+echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
