@@ -1,16 +1,11 @@
 #!/bin/bash
 # Script name: batchProcessing-0x04
-# Objective: Fetch multiple Pokémon in parallel and save their JSON data
+# Objective: Fetch multiple Pokémon in parallel using background processes and jobs
 
-# Create output directory if it doesn't exist
 mkdir -p pokemon_data
-
-# List of Pokémon to fetch
 pokemons=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
-
 MAX_RETRIES=3
 
-# Function to fetch a single Pokémon
 fetch_pokemon() {
     local pokemon=$1
     local attempt=1
@@ -34,12 +29,17 @@ fetch_pokemon() {
     fi
 }
 
-# Launch parallel fetches
+# Start fetches in parallel
 for pokemon in "${pokemons[@]}"; do
     echo "Fetching data for $pokemon..."
     fetch_pokemon "$pokemon" &
 done
 
-# Wait for all background processes to finish
+# List all background jobs
+echo "Current background jobs:"
+jobs
+
+# Wait for all background jobs to finish
 wait
+
 echo "All Pokémon data fetched."
