@@ -1,6 +1,6 @@
 #!/bin/bash
-# Script name: batchProcessing-0x02
-# Objective: Fetch multiple Pokémon with retry logic and error handling
+# Script name: batchProcessing-0x04
+# Objective: Fetch multiple Pokémon in parallel and save their JSON data
 
 # Create output directory if it doesn't exist
 mkdir -p pokemon_data
@@ -10,16 +10,14 @@ pokemons=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 
 MAX_RETRIES=3
 
-# Loop through each Pokémon
-for pokemon in "${pokemons[@]}"; do
-    echo "Fetching data for $pokemon..."
-    attempt=1
-    success=0
+# Function to fetch a single Pokémon
+fetch_pokemon() {
+    local pokemon=$1
+    local attempt=1
+    local success=0
 
     while [ $attempt -le $MAX_RETRIES ]; do
-        # Make API request
         status=$(curl -s -o "pokemon_data/${pokemon}.json" -w "%{http_code}" "https://pokeapi.co/api/v2/pokemon/$pokemon")
-
         if [ "$status" -eq 200 ]; then
             echo "Saved data to pokemon_data/${pokemon}.json ✅"
             success=1
@@ -31,11 +29,17 @@ for pokemon in "${pokemons[@]}"; do
         fi
     done
 
-    # Log error if all retries failed
     if [ $success -eq 0 ]; then
         echo "Error: Failed to fetch data for $pokemon after $MAX_RETRIES attempts" >> errors.txt
     fi
+}
 
-    # Small delay to avoid rate limiting
-    sleep 1
+# Launch parallel fetches
+for pokemon in "${pokemons[@]}"; do
+    echo "Fetching data for $pokemon..."
+    fetch_pokemon "$pokemon" &
 done
+
+# Wait for all background processes to finish
+wait
+echo "All Pokémon data fetched."
